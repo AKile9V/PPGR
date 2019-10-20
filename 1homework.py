@@ -265,15 +265,12 @@ lbl_choose.grid(column = 10 , row =5 )
 
 
 
-radio_naive = tk.Radiobutton(w,text="Naive algorithm",variable = selected,value = 1)
+radio_naive = tk.Radiobutton(w,text="Naive algorithm  ",variable = selected,value = 1)
 radio_naive.grid(column =10, row =6 )
-radio_dlt = tk.Radiobutton(w,text="DLT algorithm",variable = selected,value = 2)
+radio_dlt = tk.Radiobutton(w,text="DLT algorithm    ",variable = selected,value = 2)
 radio_dlt.grid(column =10, row =7 )
-radio_dltMod = tk.Radiobutton(w,text="DLT-mod algorithm",variable = selected,value = 3)
-radio_dltMod.grid(column =10, row =8 )
-
-
-
+radio_dltMod = tk.Radiobutton(w,text="DLT-m algorithm",variable = selected,value = 3)
+radio_dltMod.grid(column =10, row =9 )
 
 
 
@@ -300,11 +297,9 @@ def btn_clicked():
 
 
 
-
-
 #Button for running choosen algorithm
 btn_run = tk.Button(w,text="Run Algorithm",command = btn_clicked)
-btn_run.grid(column=12 ,row =9)
+btn_run.grid(column=12 ,row =10)
 
 #Running main loop of app
 w.mainloop()
