@@ -5,7 +5,7 @@ import numpy as np
 import copy
 import tkinter as tk
 import sys
-
+import math
 
 class Point:
     def __init__(self,x1,x2,x3):
@@ -24,7 +24,7 @@ class Point:
 class Geometry:
     def __init__(self,points_list):
         coords = [i.coords() for i in points_list]
-        self._points = np.array(coords);
+        self._points = coords
     
     
     def __repr__(self):
@@ -35,7 +35,7 @@ class Geometry:
         new_points = np.array(coords_list_new)
         
         n = len(new_points)
-        
+        self._points = np.array(self._points) 
         #ABC points
         abc_new = new_points[:n-1]
         abc_old = self._points[:n-1]
@@ -116,9 +116,9 @@ class Geometry:
 
         
     def DLT_algorithm(self,new_points_list):
+        self._points = np.array(self._points)
         coords_list_new = [i.coords() for i in new_points_list]
         new_points = np.array(coords_list_new)
-        
 
         n = len(new_points)
         matrixA = []
@@ -159,6 +159,65 @@ class Geometry:
         print(P)
         print()
 
+        return P
+
+
+
+
+    def DLT_algorithm_modif(self,new_points_list):
+        coords_list_new = [i.coords() for i in new_points_list]
+        new_points = np.array(coords_list_new)
+        n = len(new_points)
+
+        
+
+
+        cxp = sum( [ new_points[i][0] for i in range(n)  ]  )/n
+        cyp = sum( [ new_points[i][1] for i in range(n)  ]  )/n
+
+        for i in range(n):
+            new_points[i][0] -= cxp
+            new_points[i][1] -= cyp
+
+
+        cx = sum( [ self._points[i][0] for i in range(n)  ]  )/float(n)
+        cy = sum( [ self._points[i][1] for i in range(n)  ]  )/float(n)
+
+        for i in range(n):
+            self._points[i][0] -= cx
+            self._points[i][1] -= cy
+            
+
+        
+        
+        lambd = sum([math.sqrt(new_points[i][0]**2 + new_points[i][1]**2) for i in range(n)]) / n
+        lambdp = sum([math.sqrt(self._points[i][0]**2 + self._points[i][1]**2) for i in range(n)]) / n
+
+        k = math.sqrt(2)/lambd
+        kp = math.sqrt(2)/lambdp
+
+        for i in range(n):
+            self._points[i][0] *= k
+            self._points[i][1] *= k
+            new_points[i][0] *= kp
+            new_points[i][1] *= kp
+            
+        new = []
+        for i in range(n):
+            new.append(Point(new_points[i][0],new_points[i][1],new_points[i][2]))
+        
+        
+        
+        matrixPP = self.DLT_algorithm(new)
+        matrixT = [[1,0,-cx],[0,1,-cy],[0,0,1]]
+        matrixTp = [[1,0,-cxp],[0,1,-cyp],[0,0,1]]
+        matrixT = np.array(matrixT)
+        matrixTp = np.array(matrixTp)
+        
+        matrixTp_inv = np.linalg.inv(matrixTp)
+
+        matrixP = matrixTp_inv.dot(matrixPP)
+        matrixP = matrixP.dot(matrixT)
 
 
 
@@ -169,38 +228,48 @@ class Geometry:
 
 
 
-
-
-
-
-    def DLT_algorithm_modif(self,new_points):
-       
+        
 
 #Points (mocking)
-A = Point(-3,-1,1)
-B = Point(3,-1,1)
-C = Point(1,1,1)
-D = Point(-1,1,1)
-E = Point(1,2,3)
-F = Point(-8,-2,1)
+#A = Point(-3,-1,1)
+#B = Point(3,-1,1)
+#C = Point(1,1,1)
+#D = Point(-1,1,1)
+#E = Point(1,2,3)
+#F = Point(-8,-2,1)
 
-Ap = Point(-2,-1,1)
-Bp = Point(2,-1,1)
-Cp = Point(2,1,1)
-Dp = Point(-2,1,1)
-Ep = Point(2,1,4)
-Fp = Point(-16,-5,4)
+#Ap = Point(-2,-1,1)
+#Bp = Point(2,-1,1)
+#Cp = Point(2,1,1)
+#Dp = Point(-2,1,1)
+#Ep = Point(2,1,4)
+#Fp = Point(-16,-5,4)
 
 
 #Mock arrays
-abcd = [A,B,C,D,E,F]
-abcdp = [Ap,Bp,Cp,Dp,Ep,Fp]
+#abcd = [A,B,C,D,E,F]
+#abcdp = [Ap,Bp,Cp,Dp,Ep,Fp]
+A = Point(1,1,1)
+B = Point(5,2,1)
+C = Point(6,4,1)
+D = Point(-1,7,1)
+
+Ap = Point(0,0,1)
+Bp = Point(10,0,1)
+Cp = Point(10,5,1)
+Dp = Point(0,5,1)
+
+
+#Mock arrays
+abcd = [A,B,C,D]
+abcdp = [Ap,Bp,Cp,Dp]
+
 
 
 #Testing algorithm
 g = Geometry(abcd)
 #g.naive_algorithm(abcdp)
-g.DLT_algorithm(abcdp)
+g.DLT_algorithm_modif(abcdp)
 
 #Initializing window
 import tkinter as tk
@@ -335,7 +404,7 @@ radio_dltMod = tk.Radiobutton(radioFrame,text="DLT-m algorithm",variable = selec
 def btn_clicked():
 
 
-    try:
+    #try:
         A = Point(float(txt_A1.get()),float(txt_A2.get()),float(txt_A3.get()))
         B = Point(float(txt_B1.get()),float(txt_B2.get()),float(txt_B3.get()))
         C = Point(float(txt_C1.get()),float(txt_C2.get()),float(txt_C3.get()))
@@ -362,9 +431,9 @@ def btn_clicked():
             print("Izaberi");
 
         
-    except:
-        print("NULL")
-        print()
+    #except:
+     #   print("NULL")
+      #  print()
 
 def btn_cclicked():
     txt_A1.delete(0,tk.END)
