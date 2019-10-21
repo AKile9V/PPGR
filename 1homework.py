@@ -101,47 +101,106 @@ class Geometry:
         
         P = H.dot(G_inv)
         
-        #Normalizing transformation matrix
-        x = 1 / P[0][0]
-        m = np.array([[x,0,0],[0,x,0],[0,0,x]])
-        P = P.dot(m)
+        #############Normalizing transformation matrix
+        #x = 1 / P[0][0]
+        #m = np.array([[x,0,0],[0,x,0],[0,0,x]])
+        #P = P.dot(m)
 
         
         for i in range(n-1):
             for j in range(n-1):
-                P[i][j] = round(P[i][j],3)
+                P[i][j] = round(P[i][j],5)
                     
         print("Transformation Matrix: P = H o G_inv:")
         print(P)
 
         
-    def DLT_algorithm(self,new_points):
-        print("DLT")
-    
+    def DLT_algorithm(self,new_points_list):
+        coords_list_new = [i.coords() for i in new_points_list]
+        new_points = np.array(coords_list_new)
+        
+
+        n = len(new_points)
+        matrixA = []
+        for i in range(n):
+            cpoint = self._points[i]
+            cpointp = new_points[i]
+            miniMatrix1 = [0,0,0,-cpointp[2]*cpoint[0],-cpointp[2]*cpoint[1],-cpointp[2]*cpoint[2],cpointp[1]*cpoint[0],cpointp[1]*cpoint[1],cpointp[1]*cpoint[2]]
+            miniMatrix2 = [cpointp[2]*cpoint[0],cpointp[2]*cpoint[1],cpointp[2]*cpoint[2],0,0,0,-cpointp[0]*cpoint[0],-cpointp[0]*cpoint[1],-cpointp[0]*cpoint[2]]
+            matrixA.append(miniMatrix1)
+            matrixA.append(miniMatrix2)
+
+        matrixA = np.array(matrixA)
+        print("Matrix A")
+        print(matrixA)
+        print()
+
+        s,v,d = np.linalg.svd(matrixA)
+        lastD = d[-1]
+
+        P = []
+
+        for i in range(3):
+
+            col = [lastD[3*i],lastD[3*i+1],lastD[3*i+2]]
+            P.append(col)
+        
+
+        d = np.array(d)
+        print(d)
+ 
+        for i in range(3):
+            for j in range(3):
+                P[i][j] = round(P[i][j],5)
+
+
+        P = np.array(P)
+        print("P:")
+        print(P)
+        print()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def DLT_algorithm_modif(self,new_points):
-        print("DLT_mod")
-    
+       
 
 #Points (mocking)
-#A = Point(-3,-1,1)
-#B = Point(3,-1,1)
-#C = Point(1,1,1)
-#D = Point(-1,1,1)
+A = Point(-3,-1,1)
+B = Point(3,-1,1)
+C = Point(1,1,1)
+D = Point(-1,1,1)
+E = Point(1,2,3)
+F = Point(-8,-2,1)
 
-#Ap = Point(-2,-1,1)
-#Bp = Point(2,-1,1)
-#Cp = Point(2,1,1)
-#Dp = Point(-2,1,1)
+Ap = Point(-2,-1,1)
+Bp = Point(2,-1,1)
+Cp = Point(2,1,1)
+Dp = Point(-2,1,1)
+Ep = Point(2,1,4)
+Fp = Point(-16,-5,4)
+
 
 #Mock arrays
-#abcd = [A,B,C,D]
-#abcdp = [Ap,Bp,Cp,Dp]
+abcd = [A,B,C,D,E,F]
+abcdp = [Ap,Bp,Cp,Dp,Ep,Fp]
 
 
 #Testing algorithm
-#g = Geometry(abcd)
+g = Geometry(abcd)
 #g.naive_algorithm(abcdp)
-
+g.DLT_algorithm(abcdp)
 
 #Initializing window
 import tkinter as tk
@@ -257,49 +316,93 @@ txt_Dp3.grid(column = 9,row = 4)
 
 
 #Currently selected chooice
-selected = 0;
+selected = tk.IntVar()
 
 #User choose which algorithm will run
 lbl_choose = tk.Label(w,text= "Choose algorithm:")
 lbl_choose.grid(column = 10 , row =5 )
 
 
-
-radio_naive = tk.Radiobutton(w,text="Naive algorithm  ",variable = selected,value = 1)
-radio_naive.grid(column =10, row =6 )
-radio_dlt = tk.Radiobutton(w,text="DLT algorithm    ",variable = selected,value = 2)
-radio_dlt.grid(column =10, row =7 )
-radio_dltMod = tk.Radiobutton(w,text="DLT-m algorithm",variable = selected,value = 3)
-radio_dltMod.grid(column =10, row =9 )
+radioFrame = tk.Frame(w)
+radioFrame.grid(column = 10, row = 6)
 
 
 
+radio_naive = tk.Radiobutton(radioFrame,text="Naive algorithm  ",variable = selected,value = 1).pack(side = tk.TOP)
+radio_dlt = tk.Radiobutton(radioFrame,text="DLT algorithm    ",variable = selected,value = 2).pack(side = tk.TOP)
+radio_dltMod = tk.Radiobutton(radioFrame,text="DLT-m algorithm",variable = selected,value = 3).pack(side = tk.TOP)
 
 def btn_clicked():
 
-    #TODO: ako nista se ne unese obrardi gresku
-    A = Point(float(txt_A1.get()),float(txt_A2.get()),float(txt_A3.get()))
-    B = Point(float(txt_B1.get()),float(txt_B2.get()),float(txt_B3.get()))
-    C = Point(float(txt_C1.get()),float(txt_C2.get()),float(txt_C3.get()))
-    D = Point(float(txt_D1.get()),float(txt_D2.get()),float(txt_D3.get()))
 
-    Ap = Point(float(txt_Ap1.get()),float(txt_Ap2.get()),float(txt_Ap3.get()))
-    Bp = Point(float(txt_Bp1.get()),float(txt_Bp2.get()),float(txt_Bp3.get()))
-    Cp = Point(float(txt_Cp1.get()),float(txt_Cp2.get()),float(txt_Cp3.get()))
-    Dp = Point(float(txt_Dp1.get()),float(txt_Dp2.get()),float(txt_Dp3.get()))
+    try:
+        A = Point(float(txt_A1.get()),float(txt_A2.get()),float(txt_A3.get()))
+        B = Point(float(txt_B1.get()),float(txt_B2.get()),float(txt_B3.get()))
+        C = Point(float(txt_C1.get()),float(txt_C2.get()),float(txt_C3.get()))
+        D = Point(float(txt_D1.get()),float(txt_D2.get()),float(txt_D3.get()))
 
-    abcd = [A,B,C,D]
-    abcdp = [Ap,Bp,Cp,Dp]
+        Ap = Point(float(txt_Ap1.get()),float(txt_Ap2.get()),float(txt_Ap3.get()))
+        Bp = Point(float(txt_Bp1.get()),float(txt_Bp2.get()),float(txt_Bp3.get()))
+        Cp = Point(float(txt_Cp1.get()),float(txt_Cp2.get()),float(txt_Cp3.get()))
+        Dp = Point(float(txt_Dp1.get()),float(txt_Dp2.get()),float(txt_Dp3.get()))
 
-    g = Geometry(abcd)
-    #TODO: treba if u zavisnosti od selected da odradi odredjeni alg
-    g.naive_algorithm(abcdp)
+        
+        abcd = [A,B,C,D]
+        abcdp = [Ap,Bp,Cp,Dp]
+
+        g = Geometry(abcd)
+
+        if selected.get() == 1:
+            g.naive_algorithm(abcdp)
+        elif selected.get() == 2:
+            print("DLT")
+        elif selected.get() == 3:
+            print("DLT-m")
+        else:
+            print("Izaberi");
+
+        
+    except:
+        print("NULL")
+        print()
+
+def btn_cclicked():
+    txt_A1.delete(0,tk.END)
+    txt_A2.delete(0,tk.END)
+    txt_A3.delete(0,tk.END)
+    txt_Ap1.delete(0,tk.END)
+    txt_Ap2.delete(0,tk.END)
+    txt_Ap3.delete(0,tk.END)
+    txt_B1.delete(0,tk.END)
+    txt_B2.delete(0,tk.END)
+    txt_B3.delete(0,tk.END)
+    txt_Bp1.delete(0,tk.END)
+    txt_Bp2.delete(0,tk.END)
+    txt_Bp3.delete(0,tk.END)
+    txt_C1.delete(0,tk.END)
+    txt_C2.delete(0,tk.END)
+    txt_C3.delete(0,tk.END)
+    txt_Cp1.delete(0,tk.END)
+    txt_Cp2.delete(0,tk.END)
+    txt_Cp3.delete(0,tk.END)
+    txt_D1.delete(0,tk.END)
+    txt_D2.delete(0,tk.END)
+    txt_D3.delete(0,tk.END)
+    txt_Dp1.delete(0,tk.END)
+    txt_Dp2.delete(0,tk.END)
+    txt_Dp3.delete(0,tk.END)
 
 
 
 #Button for running choosen algorithm
 btn_run = tk.Button(w,text="Run Algorithm",command = btn_clicked)
 btn_run.grid(column=12 ,row =10)
+
+#Button 4 clearing all cells
+btn_clear = tk.Button(w,text="Clear",command = btn_cclicked)
+btn_clear.grid(column=12 ,row =11)
+
+
 
 #Running main loop of app
 w.mainloop()
