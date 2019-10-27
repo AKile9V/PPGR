@@ -71,7 +71,7 @@ def naive_algorithm(old_points, new_points):
     # m = np.array([[x,0,0],[0,x,0],[0,0,x]])
     # p_matrix = p_matrix.dot(m)
 
-    # Round on 5 decimals
+    # Round to 5 decimals
     for i in range(3):
         for j in range(3):
             p_matrix[i][j] = round(p_matrix[i][j], 5)
@@ -110,7 +110,7 @@ def dlt_algorithm(old_points, new_points):
         col = [last_d[3 * i], last_d[3 * i + 1], last_d[3 * i + 2]]
         p_matrix.append(col)
 
-    # Round on 5 decimals
+    # Round to 5 decimals
     for i in range(3):
         for j in range(3):
             p_matrix[i][j] = round(p_matrix[i][j], 5)
@@ -190,7 +190,7 @@ def dlt_algorithm_m(old_points, new_points):
     matrix_p = matrix_tp_inv.dot(matrix_pp)
     matrix_p = matrix_p.dot(matrix_t)
 
-    # Round on 5 decimals
+    # Round to 5 decimals
     for i in range(3):
         for j in range(3):
             matrix_p[i][j] = round(matrix_p[i][j], 5)
