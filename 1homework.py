@@ -32,65 +32,51 @@ def naive_algorithm(old_points, new_points):
 
     # Calculating deltas for old and new points
     for i in range(n - 1):
-        # old points
+        # originals
         abc_old_cp = copy.deepcopy(abc_old)
         abc_old_cp[i] = d_old
         abc_old_cp = abc_old_cp.transpose()
         det_old.append(np.linalg.det(abc_old_cp))
 
-        # new points
+        # images
         abc_new_cp = copy.deepcopy(abc_new)
         abc_new_cp[i] = d_new
         abc_new_cp = abc_new_cp.transpose()
         det_new.append(np.linalg.det(abc_new_cp))
 
-    # check4determinant value
+    # Checking for determinant value
     for i in range(3):
         if det_new[i] == 0:
-            print("!!!!!!!!!!!!!!!Determinante is ZERO!!!!!!!!!!!!!!!")
+            print("Error: Determinant is ZERO")
             print()
-            sys.exit()
+            sys.exit(1)
 
-    print("Deltas for old:")
-    print(det_old)
-    print()
-    print("Deltas for new:")
-    print(det_new)
-    print()
-
-    # Calculating matrix G and H
+    # Calculating matrix G, G^-1 and H
     matrix_old = []
     matrix_new = []
     for i in range(n - 1):
         matrix_old.append([j * det_old[i] for j in abc_old[i]])
         matrix_new.append([j * det_new[i] for j in abc_new[i]])
+
     matrix_old = np.array(matrix_old)
     matrix_new = np.array(matrix_new)
     matrix_old = matrix_old.transpose()
     matrix_new = matrix_new.transpose()
-
     g_matrix_inv = np.linalg.inv(matrix_old)
     h_matrix = matrix_new
-    print("G inverse matrix")
-    print(g_matrix_inv)
-    print()
-    print("H matrix")
-    print(h_matrix)
-    print()
-
     p_matrix = h_matrix.dot(g_matrix_inv)
 
     # Normalizing transformation matrix
-    # x = 1 / P[0][0]
+    # x = 1 / p_matrix[0][0]
     # m = np.array([[x,0,0],[0,x,0],[0,0,x]])
-    # P = P.dot(m)
+    # p_matrix = p_matrix.dot(m)
 
-    for i in range(n - 1):
-        for j in range(n - 1):
+    # Round on 5 decimals
+    for i in range(3):
+        for j in range(3):
             p_matrix[i][j] = round(p_matrix[i][j], 5)
 
-    print("Transformation Matrix: P = H o G_inv:")
-    print(p_matrix)
+    return p_matrix
 
 
 # ---------------------------------- DLT ----------------------------------
@@ -100,6 +86,8 @@ def dlt_algorithm(old_points, new_points):
     new_points = np.array(new_points)
     n = len(new_points)
     matrix_a = []
+
+    # Matrix A[2nx9]
     for i in range(n):
         cpoint = old_points[i]
         cpointp = new_points[i]
@@ -111,31 +99,23 @@ def dlt_algorithm(old_points, new_points):
         matrix_a.append(mini_matrix2)
 
     matrix_a = np.array(matrix_a)
-    print("Matrix A")
-    print(matrix_a)
-    print()
 
+    # SVD(Singular Value Decomposition)
     s, v, d = np.linalg.svd(matrix_a)
     last_d = d[-1]
 
+    # Transforming last column of matrix D to 3x3 P matrix
     p_matrix = []
-
     for i in range(3):
         col = [last_d[3 * i], last_d[3 * i + 1], last_d[3 * i + 2]]
         p_matrix.append(col)
 
-    d = np.array(d)
-    print(d)
-
+    # Round on 5 decimals
     for i in range(3):
         for j in range(3):
             p_matrix[i][j] = round(p_matrix[i][j], 5)
 
     p_matrix = np.array(p_matrix)
-    print("P:")
-    print(p_matrix)
-    print()
-
     return p_matrix
 
 
@@ -147,97 +127,174 @@ def dlt_algorithm_m(old_points, new_points):
     old_points = np.array(old_points)
     new_points = np.array(new_points)
 
-    cxp = sum([new_points[i][0] for i in range(n)]) / n
-    cyp = sum([new_points[i][1] for i in range(n)]) / n
+    # Making 3rd coordinate equal to 1
+    for i in range(n):
+        # originals
+        old_points[i][0] = old_points[i][0] / old_points[i][2]
+        old_points[i][1] = old_points[i][1] / old_points[i][2]
+        old_points[i][2] = old_points[i][2] / old_points[i][2]
 
+        # images
+        new_points[i][0] = new_points[i][0] / new_points[i][2]
+        new_points[i][1] = new_points[i][1] / new_points[i][2]
+        new_points[i][2] = new_points[i][2] / new_points[i][2]
+
+    # Center of points (G,G')
+    cx = sum([old_points[i][0] for i in range(n)]) / float(n)
+    cy = sum([old_points[i][1] for i in range(n)]) / float(n)
+    cyp = sum([new_points[i][1] for i in range(n)]) / float(n)
+    cxp = sum([new_points[i][0] for i in range(n)]) / float(n)
+
+    # Translating points
     for i in range(n):
         new_points[i][0] -= cxp
         new_points[i][1] -= cyp
-
-    cx = sum([old_points[i][0] for i in range(n)]) / float(n)
-    cy = sum([old_points[i][1] for i in range(n)]) / float(n)
-
-    for i in range(n):
         old_points[i][0] -= cx
         old_points[i][1] -= cy
 
-    lambd = sum([math.sqrt(old_points[i][0] ** 2 + old_points[i][1] ** 2) for i in range(n)]) / n
-    lambdp = sum([math.sqrt(new_points[i][0] ** 2 + new_points[i][1] ** 2) for i in range(n)]) / n
+    # Homothetic transformation (S,S')
+    lambd = 0
+    lambdp = 0
+    for i in range(n):
+        lambd = lambd + math.sqrt(old_points[i][0] ** 2 + old_points[i][1] ** 2)
+        lambdp = lambdp + math.sqrt(new_points[i][0] ** 2 + new_points[i][1] ** 2)
 
+    lambd = lambd / float(n)
+    lambdp = lambdp / float(n)
     k = math.sqrt(2) / lambd
     kp = math.sqrt(2) / lambdp
 
+    # Using Homothety on points
     for i in range(n):
-        old_points[i][0] /= k
-        old_points[i][1] /= k
-        new_points[i][0] /= kp
-        new_points[i][1] /= kp
+        old_points[i][0] *= k
+        old_points[i][1] *= k
+        new_points[i][0] *= kp
+        new_points[i][1] *= kp
 
+    # DLT on new points = P'
     matrix_pp = dlt_algorithm(old_points, new_points)
+
+    # Calculating matrix T = S * G
     matrix1 = np.array([[1, 0, -cx], [0, 1, -cy], [0, 0, 1]])
     matrix2 = np.array([[k, 0, 0], [0, k, 0], [0, 0, 1]])
     matrix_t = matrix2.dot(matrix1)
 
+    # Calculating matrix T' = S' * G'
     matrix1p = np.array([[1, 0, -cxp], [0, 1, -cyp], [0, 0, 1]])
     matrix2p = np.array([[kp, 0, 0], [0, kp, 0], [0, 0, 1]])
     matrix_tp = matrix2p.dot(matrix1p)
 
+    # (T')^-1
     matrix_tp_inv = np.linalg.inv(matrix_tp)
-
+    # P = (T')^-1 * P' * T
     matrix_p = matrix_tp_inv.dot(matrix_pp)
     matrix_p = matrix_p.dot(matrix_t)
 
+    # Round on 5 decimals
+    for i in range(3):
+        for j in range(3):
+            matrix_p[i][j] = round(matrix_p[i][j], 5)
 
-
-    print("P:")
-    print(matrix_p)
-
-    print("NEKI ISPIS")
-    print(matrix_t)
+    return matrix_p
 
 
 def run_me():
-    old_points = [[-3.0, -1.0, 1.0], [3.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
-                  [1.0, 2.0, 3.0], [-8.0, -2.0, 1.0]]
-    new_points = [[-2.0, -1.0, 1.0], [2.0, -1.0, 1.0], [2.0, 1.0, 1.0], [-2.0, 1.0, 1.0],
-                  [2.0, 1.0, 4.0], [-16.0, -5.0, 4.0]]
+    old_points = []
+    new_points = []
 
-    n = int(input("How many points you wanna input?"))
-    if n == 0:
-        return
+    # Mocking
+    # old_points = [[-3.0, -1.0, 1.0], [3.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
+    #               [1.0, 2.0, 3.0], [-8.0, -2.0, 1.0]]
+    # new_points = [[-2.0, -1.0, 1.0], [2.0, -1.0, 1.0], [2.0, 1.0, 1.0], [-2.0, 1.0, 1.0],
+    #               [2.0, 1.0, 4.0], [-16.0, -5.0, 4.0]]
+    # old_points = [[1.0, 1.0, 1.0], [5.0, 2.0, 1.0], [6.0, 4.0, 1.0], [-1.0, 7.0, 1.0]]
+    # new_points = [[0.0, 0.0, 1.0], [10.0, 0.0, 1.0], [10.0, 5.0, 1.0], [0.0, 5.0, 1.0]]
 
-    a = int(input("Which alg you wanna use: \n0:Naive\n1:DLT\n2:DLT-modificated"))
+    # Points number
+    try:
+        n = int(input("How many points do you want to input?\n"))
+    except ValueError:
+        print("Error: Not a number")
+        sys.exit(1)
 
-    #
-    # print("Unos tacaka")
-    # p = ["A", "B", "C", "D", "E", "F", "G", "H"]
-    # pp = ["A'", "B'", "C'", "D'", "E'", "F'", "G'", "H'"]
-    # for i in range(n):
-    #     print("Unos tacke {}:".format(p[i]))
-    #     x1 = int(input())
-    #     x2 = int(input())
-    #     x3 = int(input())
-    #     old_points.append([x1, x2, x3])
-    #
-    # for i in range(n):
-    #     print("Unos tacke {}:".format(pp[i]))
-    #     x1 = int(input())
-    #     x2 = int(input())
-    #     x3 = int(input())
-    #     new_points.append([x1, x2, x3])
+    # Algorithm choice
+    while True:
+        if n > 4:
+            a = input("Which algorithm do you want to use: \n1:DLT\n2:DLT-mod\n").lower()
+            if a == "1" or a == "2" or a == "dlt" or a == "dlt-mod":
+                break
+            else:
+                print("Pick algorithm by typing [1|DLT|dlt] or [2|DLT-mod|dlt-mod]")
+        elif n == 4:
+            a = input("Which algorithm do you want to use: \n0:Naive\n1:DLT\n2:DLT-mod\n").lower()
+            if a == "1" or a == "2" or a == "dlt" or a == "dlt-mod" or a == "0" or a == "naive":
+                break
+            else:
+                print("Pick algorithm by typing [0|NAIVE|naive] or [1|DLT|dlt] or [2|DLT-mod|dlt-mod]")
+        else:
+            print("Error: Value n must be (>=4)")
+            sys.exit(1)
 
-    if a == 0:
-        naive_algorithm(old_points, new_points)
-    elif a == 1:
-        dlt_algorithm(old_points, new_points)
-    elif a == 2:
-        dlt_algorithm_m(old_points, new_points)
+    # Points notation, for now 26; TODO: [lowerCase] a,b,c,d...aa,ab,ac,ad...
+    p = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q",
+         "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    pp = ["A'", "B'", "C'", "D'", "E'", "F'", "G'", "H'", "I'", "J'", "K'", "L'", "M'", "N'",
+          "O'", "P'", "Q'", "R'", "S'", "T'", "U'", "V'", "W'", "Y'", "Z'"]
+
+    # Taking user inputs for originals
+    print("Enter [originals]points in format: x:y:z")
+    for i in range(n):
+        print("Enter point {}:".format(p[i]))
+        entered = input().split(":")
+        try:
+            x1 = float(entered[0])
+            x2 = float(entered[1])
+            x3 = float(entered[2])
+        except (ValueError, IndexError):
+            print("Error: Format must be x:y:z")
+            sys.exit(1)
+        old_points.append([x1, x2, x3])
+
+    # Taking user inputs for images
+    print("Enter [images]points in format: x:y:z")
+    for i in range(n):
+        print("Enter point {}:".format(pp[i]))
+        entered = input().split(":")
+        try:
+            x1 = float(entered[0])
+            x2 = float(entered[1])
+            x3 = float(entered[2])
+        except (ValueError, IndexError):
+            print("Error: Format must be x':y':z'")
+            sys.exit(1)
+        new_points.append([x1, x2, x3])
+
+    # Using chosen algorithm
+    if a == "0" or a == "naive":
+        naive_p_matrix = naive_algorithm(old_points, new_points)
+        print("Using NAIVE algorithm, transformation matrix P is:")
+        print(naive_p_matrix)
+    elif a == "1" or a == "dlt":
+        dlt_p_matrix = dlt_algorithm(old_points, new_points)
+        print("Using DLT algorithm, transformation matrix P is:")
+        print(dlt_p_matrix)
+    elif a == "2" or a == "dlt-m":
+        dlt_m_p_matrix = dlt_algorithm_m(old_points, new_points)
+        print("Using DLT-M algorithm, transformation matrix P is:")
+        print(dlt_m_p_matrix)
     else:
-        print("Ne postoji algoritam")
+        print("Typo... Try again")
 
+    return
+
+
+# MAIN
 def main():
     run_me()
 
+    sys.exit()
 
+
+# GOGOGO
 if __name__ == "__main__":
     main()
