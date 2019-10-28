@@ -8,9 +8,8 @@ import sys
 import math
 import cv2
 
-
 import tkinter as tk
-from PIL import ImageTk,Image
+from PIL import ImageTk, Image
 
 
 # ---------------------------------- NAIVE ----------------------------------
@@ -72,10 +71,10 @@ def naive_algorithm(old_points, new_points):
     # m = np.array([[x,0,0],[0,x,0],[0,0,x]])
     # p_matrix = p_matrix.dot(m)
 
-    # Round to 5 decimals
+    # Round to 9 decimals
     for i in range(3):
         for j in range(3):
-            p_matrix[i][j] = round(p_matrix[i][j], 5)
+            p_matrix[i][j] = round(p_matrix[i][j], 9)
 
     return p_matrix
 
@@ -111,16 +110,16 @@ def dlt_algorithm(old_points, new_points):
         col = [last_d[3 * i], last_d[3 * i + 1], last_d[3 * i + 2]]
         p_matrix.append(col)
 
-    # Round to 5 decimals
+    # Round to 9 decimals
     for i in range(3):
         for j in range(3):
-            p_matrix[i][j] = round(p_matrix[i][j], 5)
+            p_matrix[i][j] = round(p_matrix[i][j], 9)
 
     p_matrix = np.array(p_matrix)
     return p_matrix
 
 
-# ----------------------------------DLT-M ----------------------------------
+# ---------------------------------- DLT-M ----------------------------------
 
 
 def dlt_algorithm_m(old_points, new_points):
@@ -162,7 +161,7 @@ def dlt_algorithm_m(old_points, new_points):
 
     lambd = lambd / float(n)
     lambdp = lambdp / float(n)
-    if(lambd == 0 or lambdp == 0):
+    if lambd == 0 or lambdp == 0:
         print("Error: points are collinear!")
         sys.exit(1)
     k = math.sqrt(2) / lambd
@@ -194,12 +193,14 @@ def dlt_algorithm_m(old_points, new_points):
     matrix_p = matrix_tp_inv.dot(matrix_pp)
     matrix_p = matrix_p.dot(matrix_t)
 
-    # Round to 5 decimals
+    # Round to 9 decimals
     for i in range(3):
         for j in range(3):
-            matrix_p[i][j] = round(matrix_p[i][j], 5)
+            matrix_p[i][j] = round(matrix_p[i][j], 9)
 
     return matrix_p
+
+# ---------------------------------- CONSOLE ----------------------------------
 
 
 def run_me():
@@ -291,89 +292,103 @@ def run_me():
 
     return
 
+# ---------------------------------- GUI ----------------------------------
+
 
 def GUI():
-    
     window = tk.Tk()
-    window.attributes("-zoomed",True)
-    #window.geometry("800x600")
-    canv = tk.Canvas(window,bg= 'white')
-    canv.pack(expand = True,fill = "both")
-    
-    
+    window.title("Projective distortion")
+
+    # If u want fullscreen:
+    # window.attributes("-zoomed", True)
+
+    # Window size = picture dimensions
+    ld4win = cv2.imread("1.png")
+    width_wc = ld4win.shape[0]
+    height_wc = ld4win.shape[1]
+    ld4win = None
+    geom_string = "{}x{}".format(height_wc,width_wc)
+    window.geometry(geom_string)
+    canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
+    canv.pack(expand=True, fill="both")
+
     points = []
+
     def click(eventorigin):
-        x0 = eventorigin.x
-        y0 = eventorigin.y
-        points.append([x0,y0,1])
-        print("#{}Tacka {}:{} je uneta".format(len(points),x0,y0))
-        if(len(points) == 4):
+        x0 = float(eventorigin.x)
+        y0 = float(eventorigin.y)
+        points.append([x0, y0,1.0])
+        print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
+        if len(points) == 4:
             canv.unbind("<Button 1>")
             solve(points)
-            
-    
-    def show(eventorigin):
-        print(points)
-        sort(points)
-    
-    canv.bind("<Button 1>",click)
-    #window.bind("<Escape>",show)
-    
-    img = ImageTk.PhotoImage(Image.open("1.bmp"))
-    canv.create_image(0,0,image = img,anchor = tk.NW)
-    
-    
+
+    canv.bind("<Button 1>", click)
+    img = ImageTk.PhotoImage(Image.open("1.png"))
+    canv.create_image(0, 0, image=img, anchor=tk.NW)
+
     tk.mainloop()
 
+
+def sorting_points(points):
+    n = len(points)
+    distance = []
+    for i in range(n):
+        distance.append([points[i][0] ** 2 + points[i][1] ** 2, points[i]])
+
+    ret_points = sorted(distance, key=lambda x: x[0])
+
+    old_points = []
+    for i in range(n):
+        old_points.append(ret_points[i][1])
+
+    return old_points
+
+
 def solve(points):
-    #Sorting points by distance
-    old_points = sorted(points,key = lambda x:(x[0]+x[1]))
+    # Sorting points by distance
+    # old_points = sorted(points, key=lambda x: (x[0] + x[1]))
+    old_points = sorting_points(points)
+    print(old_points)
     new_points = copy.deepcopy(old_points)
-    
-    
-    #Finding images
-    d = (abs(new_points[0][0] - new_points[3][0]) + abs(new_points[1][0] - new_points[2][0]))/2
-    v = (abs(new_points[0][1] - new_points[3][1]) + abs(new_points[1][1] - new_points[2][1]))/2
-    
-    a = (new_points[0][0] + new_points[1][0])/2
-    b = (new_points[0][1] + new_points[3][1])/2
-    
+
+    # Finding images
+    d = (abs(new_points[0][0] - new_points[3][0]) + abs(new_points[1][0] - new_points[2][0])) / 2
+    v = (abs(new_points[0][1] - new_points[1][1]) + abs(new_points[3][1] - new_points[2][1])) / 2
+
+    a = (new_points[0][0] + new_points[1][0]) / 2
+    b = (new_points[0][1] + new_points[3][1]) / 2
+
     new_points[0][0] = a
     new_points[0][1] = b
-    
+
     new_points[1][0] = new_points[0][0]
     new_points[1][1] = new_points[0][1] + v
     new_points[2][0] = new_points[0][0] + d
     new_points[2][1] = new_points[1][1]
     new_points[3][0] = new_points[2][0]
     new_points[3][1] = new_points[0][1]
-    
-    M = dlt_algorithm(old_points,new_points)
-    Minv = np.linalg.inv(M)
-    
-    im = cv2.imread("1.bmp")
-    newim = cv2.warpPerspective(im,Minv,(im.shape[0],im.shape[1]))
-    newim = cv2.warpPerspective(im,M,(im.shape[0],im.shape[1]))
-    cv2.imwrite("2.bmp",newim)
-    
-    print(M)
-    
-    
-    
 
+    M = dlt_algorithm(old_points, new_points)
+    # Minv = np.linalg.inv(M)
+
+    # TODO:Istraziti sta kaze ovaj error (Gore skratiti za onu zadnju koord)
+    # MM = cv2.getPerspectiveTransform(np.array(old_points),np.array(new_points))
+
+    im = cv2.imread("1.png")
+    newim = cv2.warpPerspective(im, M, (im.shape[1], im.shape[0]), flags=cv2.INTER_LINEAR)
+    cv2.imwrite("2.png", newim)
+    print(M)
 
 
 # MAIN
 def main():
     GUI()
-   # run_me()
-    
+    # run_me()
+
     sys.exit()
-
-
 
 
 # GOGOGO
 if __name__ == "__main__":
     main()
-
