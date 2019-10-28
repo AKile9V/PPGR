@@ -6,9 +6,11 @@ import numpy as np
 import copy
 import sys
 import math
+import cv2
 
 
-# import tkinter as tk
+import tkinter as tk
+from PIL import ImageTk,Image
 
 
 # ---------------------------------- NAIVE ----------------------------------
@@ -47,8 +49,7 @@ def naive_algorithm(old_points, new_points):
     # Checking for determinant value
     for i in range(3):
         if det_new[i] == 0:
-            print("Error: Determinant is ZERO")
-            print()
+            print("Error: points are collinear!")
             sys.exit(1)
 
     # Calculating matrix G, G^-1 and H
@@ -161,6 +162,9 @@ def dlt_algorithm_m(old_points, new_points):
 
     lambd = lambd / float(n)
     lambdp = lambdp / float(n)
+    if(lambd == 0 or lambdp == 0):
+        print("Error: points are collinear!")
+        sys.exit(1)
     k = math.sqrt(2) / lambd
     kp = math.sqrt(2) / lambdp
 
@@ -288,13 +292,88 @@ def run_me():
     return
 
 
+def GUI():
+    
+    window = tk.Tk()
+    window.attributes("-zoomed",True)
+    #window.geometry("800x600")
+    canv = tk.Canvas(window,bg= 'white')
+    canv.pack(expand = True,fill = "both")
+    
+    
+    points = []
+    def click(eventorigin):
+        x0 = eventorigin.x
+        y0 = eventorigin.y
+        points.append([x0,y0,1])
+        print("#{}Tacka {}:{} je uneta".format(len(points),x0,y0))
+        if(len(points) == 4):
+            canv.unbind("<Button 1>")
+            solve(points)
+            
+    
+    def show(eventorigin):
+        print(points)
+        sort(points)
+    
+    canv.bind("<Button 1>",click)
+    #window.bind("<Escape>",show)
+    
+    img = ImageTk.PhotoImage(Image.open("1.bmp"))
+    canv.create_image(0,0,image = img,anchor = tk.NW)
+    
+    
+    tk.mainloop()
+
+def solve(points):
+    #Sorting points by distance
+    old_points = sorted(points,key = lambda x:(x[0]+x[1]))
+    new_points = copy.deepcopy(old_points)
+    
+    
+    #Finding images
+    d = (abs(new_points[0][0] - new_points[3][0]) + abs(new_points[1][0] - new_points[2][0]))/2
+    v = (abs(new_points[0][1] - new_points[3][1]) + abs(new_points[1][1] - new_points[2][1]))/2
+    
+    a = (new_points[0][0] + new_points[1][0])/2
+    b = (new_points[0][1] + new_points[3][1])/2
+    
+    new_points[0][0] = a
+    new_points[0][1] = b
+    
+    new_points[1][0] = new_points[0][0]
+    new_points[1][1] = new_points[0][1] + v
+    new_points[2][0] = new_points[0][0] + d
+    new_points[2][1] = new_points[1][1]
+    new_points[3][0] = new_points[2][0]
+    new_points[3][1] = new_points[0][1]
+    
+    M = dlt_algorithm(old_points,new_points)
+    Minv = np.linalg.inv(M)
+    
+    im = cv2.imread("1.bmp")
+    newim = cv2.warpPerspective(im,Minv,(im.shape[0],im.shape[1]))
+    newim = cv2.warpPerspective(im,M,(im.shape[0],im.shape[1]))
+    cv2.imwrite("2.bmp",newim)
+    
+    print(M)
+    
+    
+    
+
+
+
 # MAIN
 def main():
-    run_me()
-
+    GUI()
+   # run_me()
+    
     sys.exit()
+
+
 
 
 # GOGOGO
 if __name__ == "__main__":
     main()
+
