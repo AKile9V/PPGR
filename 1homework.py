@@ -8,6 +8,7 @@ import sys
 import math
 import cv2
 
+import time
 import tkinter as tk
 from PIL import ImageTk, Image
 import tkinter.filedialog
@@ -299,8 +300,6 @@ def console_alghorithms():
 
 
 def GUI():
-    window = tk.Tk()
-    window.title("Projective distortion")
 
     file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
 
@@ -333,6 +332,11 @@ def GUI():
         print("You must choose file to upload")
         sys.exit(1)
 
+
+    window = tk.Tk()
+    
+    window.title("Projective distortion")
+
     geom_string = "{}x{}".format(height_wc, width_wc)
     window.geometry(geom_string)
     canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
@@ -344,18 +348,43 @@ def GUI():
     def click(eventorigin):
         x0 = float(eventorigin.x)
         y0 = float(eventorigin.y)
-        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
         points.append([x0, y0, 1.0])
+        
+        
+        if len(points) != 1:
+            rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
+            rec_id.append(canv.create_line(points[len(points)-2][0],points[len(points)-2][1],x0,y0,fill="red"));
+        else:
+            rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
+        
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
             canv.unbind("<Button 1>")
-            solve(points, image_file, width_wc, height_wc)
+            canv.unbind("<Motion>")
+            new_points = solve(points, image_file, width_wc, height_wc)
             ext = image_file.split('.')
             new_image = ImageTk.PhotoImage(Image.open("result."+ext[-1]))
             canv.itemconfig(1, image=new_image)
+            
+            #Drawing points and rectangle on final picture
+            for j in new_points:
+                canv.create_rectangle(j[0]-5, j[1]-5,j[0]+5,j[1]+5,outline="yellow",width=2)
+            for k in range(len(new_points)-1):
+                canv.create_line(new_points[k][0],new_points[k][1],new_points[k+1][0],new_points[k+1][1],fill = "yellow")
+            canv.create_line(new_points[len(new_points)-1][0],new_points[len(new_points)-1][1],new_points[0][0],new_points[0][1],fill="yellow")
+            
             for i in rec_id:
                 canv.delete(i)
-            tk.mainloop()
+            canv.delete(text_id)
+            canv.update()
+
+    def motion(event):
+        x0 = int(event.x)
+        y0 = int(event.y)
+        canv.itemconfig(text_id,text = "X: {} Y: {}".format(x0,y0))
+        canv.update()
+        
+    
 
 
     canv.bind("<Button 1>", click)
@@ -363,8 +392,14 @@ def GUI():
     tmp = tmp.resize((height_wc, width_wc), Image.ANTIALIAS)
     # img = ImageTk.PhotoImage(tmp)
 
+
+
     img = ImageTk.PhotoImage(tmp)
     canv.create_image(0, 0, image=img, anchor=tk.NW)
+
+    text_id  = canv.create_text(100,10,fill="red",font="Times 15 italic bold", text="X: {} Y: {}".format(0,0))
+    canv.bind("<Motion>",motion)
+    
 
     tk.mainloop()
 
@@ -408,6 +443,9 @@ def solve(points, image_file,width_w, height_w):
     new_points[3][0] = new_points[2][0]
     new_points[3][1] = new_points[0][1]
 
+    #Points that will be returned from function for purpose of drawing
+    new_points_return = copy.deepcopy(new_points)
+
     # Sorting new points TOO
     new_points = sorting_points(new_points)
 
@@ -420,6 +458,8 @@ def solve(points, image_file,width_w, height_w):
     ext = image_file.split('.')
     # saving file result.ext
     cv2.imwrite("result." + ext[-1], newim)
+    
+    return new_points_return
 
 
 # MAIN
