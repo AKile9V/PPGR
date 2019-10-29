@@ -19,7 +19,6 @@ def naive_algorithm(old_points, new_points):
     new_points = np.array(new_points)
     old_points = np.array(old_points)
 
-
     n = len(new_points)
     # ABC points
     abc_new = new_points[:n - 1]
@@ -302,14 +301,14 @@ def console_alghorithms():
 def GUI():
     window = tk.Tk()
     window.title("Projective distortion")
-    
-    file_types = ["*.jpeg","*.jpg","*.bmp","*.png"]
-    
+
+    file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
+
     try:
-        #Open file dialog
-        image_file = tkinter.filedialog.askopenfilename(title = "Select picture to upload:", filetypes = (("Pictures",file_types ),))
-        
-    
+        # Open file dialog
+        image_file = tkinter.filedialog.askopenfilename(initialdir="~/Desktop", title="Select picture to upload:",
+                                                        filetypes=(("Pictures", file_types),))
+
         # If u want fullscreen:
         # window.attributes("-zoomed", True)
 
@@ -317,32 +316,43 @@ def GUI():
         ld4win = cv2.imread(image_file)
         width_wc = ld4win.shape[0]
         height_wc = ld4win.shape[1]
-    except(SystemError):
+
+
+    except(SystemError, AttributeError):
         print("You must choose file to upload")
         sys.exit(1)
-        
+
     geom_string = "{}x{}".format(height_wc, width_wc)
     window.geometry(geom_string)
     canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
     canv.pack(expand=True, fill="both")
 
     points = []
+    rec_id = []
 
     def click(eventorigin):
         x0 = float(eventorigin.x)
         y0 = float(eventorigin.y)
-        canv.create_rectangle(x0-5, y0-5, x0+5, y0+5,outline="#f11", width=2)
+        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
         points.append([x0, y0, 1.0])
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
             canv.unbind("<Button 1>")
-            solve(points,image_file)
+            solve(points, image_file)
+            ext = image_file.split('.')
+            new_image = ImageTk.PhotoImage(Image.open("result."+ext[-1]))
+            canv.itemconfig(1, image=new_image)
+            for i in rec_id:
+                canv.delete(i)
+            tk.mainloop()
+
 
     canv.bind("<Button 1>", click)
     img = ImageTk.PhotoImage(Image.open(image_file))
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
     tk.mainloop()
+
 
 
 def sorting_points(points):
@@ -360,9 +370,9 @@ def sorting_points(points):
     return old_points
 
 
-#added image_file as argument
+# added image_file as argument
 
-def solve(points,image_file):
+def solve(points, image_file):
     # Sorting points by distance
     old_points = sorting_points(points)
 
@@ -389,10 +399,10 @@ def solve(points,image_file):
     M = dlt_algorithm_m(old_points, new_points)
     im = cv2.imread(image_file)
     newim = cv2.warpPerspective(im, M, (im.shape[1], im.shape[0]), flags=cv2.INTER_LINEAR)
-    
-    #geting extension of sent file
+
+    # geting extension of sent file
     ext = image_file.split('.')
-    #saving file result.ext
+    # saving file result.ext
     cv2.imwrite("result." + ext[-1], newim)
 
 
