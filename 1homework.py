@@ -318,6 +318,7 @@ def GUI():
     def click(eventorigin):
         x0 = float(eventorigin.x)
         y0 = float(eventorigin.y)
+        canv.create_rectangle(x0-5, y0-5, x0+5, y0+5,outline="#f11", width=2)
         points.append([x0, y0, 1.0])
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
