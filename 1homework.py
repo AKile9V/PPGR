@@ -350,12 +350,13 @@ def GUI():
         y0 = float(eventorigin.y)
         points.append([x0, y0, 1.0])
         
-        
+        #Drawing lines on original image
         if len(points) != 1:
             rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
             rec_id.append(canv.create_line(points[len(points)-2][0],points[len(points)-2][1],x0,y0,fill="red"));
         else:
             rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
+        
         
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
@@ -376,8 +377,10 @@ def GUI():
             for i in rec_id:
                 canv.delete(i)
             canv.delete(text_id)
-            canv.update()
+            tk.mainloop()
 
+
+    #Mouse motion function
     def motion(event):
         x0 = int(event.x)
         y0 = int(event.y)
@@ -397,6 +400,8 @@ def GUI():
     img = ImageTk.PhotoImage(tmp)
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
+
+    #Mouse position
     text_id  = canv.create_text(100,10,fill="red",font="Times 15 italic bold", text="X: {} Y: {}".format(0,0))
     canv.bind("<Motion>",motion)
     
@@ -459,6 +464,7 @@ def solve(points, image_file,width_w, height_w):
     # saving file result.ext
     cv2.imwrite("result." + ext[-1], newim)
     
+    #returning unsorted points (drawing)
     return new_points_return
 
 
