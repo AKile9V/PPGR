@@ -10,6 +10,7 @@ import cv2
 
 import tkinter as tk
 from PIL import ImageTk, Image
+import tkinter.filedialog
 
 
 # ---------------------------------- NAIVE ----------------------------------
@@ -17,6 +18,7 @@ from PIL import ImageTk, Image
 def naive_algorithm(old_points, new_points):
     new_points = np.array(new_points)
     old_points = np.array(old_points)
+
 
     n = len(new_points)
     # ABC points
@@ -300,14 +302,25 @@ def console_alghorithms():
 def GUI():
     window = tk.Tk()
     window.title("Projective distortion")
+    
+    file_types = ["*.jpeg","*.jpg","*.bmp","*.png"]
+    
+    try:
+        #Open file dialog
+        image_file = tkinter.filedialog.askopenfilename(title = "Select picture to upload:", filetypes = (("Pictures",file_types ),))
+        
+    
+        # If u want fullscreen:
+        # window.attributes("-zoomed", True)
 
-    # If u want fullscreen:
-    # window.attributes("-zoomed", True)
-
-    # Window size = picture dimensions
-    ld4win = cv2.imread("1.jpg")
-    width_wc = ld4win.shape[0]
-    height_wc = ld4win.shape[1]
+        # Window size = picture dimensions
+        ld4win = cv2.imread(image_file)
+        width_wc = ld4win.shape[0]
+        height_wc = ld4win.shape[1]
+    except(SystemError):
+        print("You must choose file to upload")
+        sys.exit(1)
+        
     geom_string = "{}x{}".format(height_wc, width_wc)
     window.geometry(geom_string)
     canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
@@ -323,10 +336,10 @@ def GUI():
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
             canv.unbind("<Button 1>")
-            solve(points)
+            solve(points,image_file)
 
     canv.bind("<Button 1>", click)
-    img = ImageTk.PhotoImage(Image.open("1.jpg"))
+    img = ImageTk.PhotoImage(Image.open(image_file))
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
     tk.mainloop()
@@ -347,7 +360,9 @@ def sorting_points(points):
     return old_points
 
 
-def solve(points):
+#added image_file as argument
+
+def solve(points,image_file):
     # Sorting points by distance
     old_points = sorting_points(points)
 
@@ -372,9 +387,13 @@ def solve(points):
     new_points = sorting_points(new_points)
 
     M = dlt_algorithm_m(old_points, new_points)
-    im = cv2.imread("1.jpg")
+    im = cv2.imread(image_file)
     newim = cv2.warpPerspective(im, M, (im.shape[1], im.shape[0]), flags=cv2.INTER_LINEAR)
-    cv2.imwrite("2.jpg", newim)
+    
+    #geting extension of sent file
+    ext = image_file.split('.')
+    #saving file result.ext
+    cv2.imwrite("result." + ext[-1], newim)
 
 
 # MAIN
