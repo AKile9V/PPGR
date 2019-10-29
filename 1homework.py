@@ -316,6 +316,17 @@ def GUI():
         ld4win = cv2.imread(image_file)
         width_wc = ld4win.shape[0]
         height_wc = ld4win.shape[1]
+        scalcina = 1
+
+        if width_wc>1080 or height_wc>1920:
+            if width_wc>height_wc:
+                scalcina = 720/width_wc
+            else:
+                scalcina = 1280/height_wc
+
+        width_wc = int(width_wc*scalcina)
+        height_wc = int(height_wc*scalcina)
+
 
 
     except(SystemError, AttributeError):
@@ -338,7 +349,7 @@ def GUI():
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
             canv.unbind("<Button 1>")
-            solve(points, image_file)
+            solve(points, image_file, width_wc, height_wc)
             ext = image_file.split('.')
             new_image = ImageTk.PhotoImage(Image.open("result."+ext[-1]))
             canv.itemconfig(1, image=new_image)
@@ -348,7 +359,11 @@ def GUI():
 
 
     canv.bind("<Button 1>", click)
-    img = ImageTk.PhotoImage(Image.open(image_file))
+    tmp = Image.open(image_file)
+    tmp = tmp.resize((height_wc, width_wc), Image.ANTIALIAS)
+    # img = ImageTk.PhotoImage(tmp)
+
+    img = ImageTk.PhotoImage(tmp)
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
     tk.mainloop()
@@ -372,7 +387,7 @@ def sorting_points(points):
 
 # added image_file as argument
 
-def solve(points, image_file):
+def solve(points, image_file,width_w, height_w):
     # Sorting points by distance
     old_points = sorting_points(points)
 
@@ -398,7 +413,8 @@ def solve(points, image_file):
 
     M = dlt_algorithm_m(old_points, new_points)
     im = cv2.imread(image_file)
-    newim = cv2.warpPerspective(im, M, (im.shape[1], im.shape[0]), flags=cv2.INTER_LINEAR)
+    imf = cv2.resize(im,(height_w,width_w))
+    newim = cv2.warpPerspective(imf, M, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
 
     # geting extension of sent file
     ext = image_file.split('.')
