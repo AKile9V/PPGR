@@ -7,7 +7,6 @@ import copy
 import sys
 import math
 import cv2
-
 import tkinter as tk
 from PIL import ImageTk, Image
 import tkinter.filedialog
@@ -205,17 +204,39 @@ def dlt_algorithm_m(old_points, new_points):
 # ---------------------------------- CONSOLE ----------------------------------
 
 
+def test():
+    # Mocking
+    old_points = [[-3.0, -1.0, 1.0], [3.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
+                  [1.0, 2.0, 3.0], [-8.0, -2.0, 1.0]]
+    new_points = [[-2.0, -1.0, 1.0], [2.0, -1.0, 1.0], [2.0, 1.0, 1.0], [-2.0, 1.0, 1.0],
+                  [2.0, 1.0, 4.0], [-16.0, -5.0, 4.0]]
+    # old_points = [[1.0, 1.0, 1.0], [5.0, 2.0, 1.0], [6.0, 4.0, 1.0], [-1.0, 7.0, 1.0], [3.0, 1.0, 1.0]]
+    # new_points = [[0.0, 0.0, 1.0], [10.0, 0.0, 1.0], [10.0, 5.0, 1.0], [0.0, 5.0, 1.0], [3.0, -1.0, 1.0]]
+    while True:
+        a = input("Which algorithm do you want to use: \n0:Naive\n1:DLT\n2:DLT-mod\n").lower()
+        if a == "1" or a == "2" or a == "dlt" or a == "dlt-mod" or a == "0" or a == "naive":
+            if a == "0" or a == "naive":
+                naive_p_matrix = naive_algorithm(old_points[0:4], new_points[0:4])
+                print("Using NAIVE algorithm, transformation matrix P is:")
+                print(naive_p_matrix)
+                break
+            elif a == "1" or a == "dlt":
+                dlt_p_matrix = dlt_algorithm(old_points, new_points)
+                print("Using DLT algorithm, transformation matrix P is:")
+                print(dlt_p_matrix)
+                break
+            elif a == "2" or a == "dlt-m":
+                dlt_m_p_matrix = dlt_algorithm_m(old_points, new_points)
+                print("Using DLT-M algorithm, transformation matrix P is:")
+                print(dlt_m_p_matrix)
+                break
+        else:
+            print("Pick algorithm by typing [0|NAIVE|naive] or [1|DLT|dlt] or [2|DLT-mod|dlt-mod]")
+
+
 def console_alghorithms():
     old_points = []
     new_points = []
-
-    # Mocking
-    # old_points = [[-3.0, -1.0, 1.0], [3.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
-    #               [1.0, 2.0, 3.0], [-8.0, -2.0, 1.0]]
-    # new_points = [[-2.0, -1.0, 1.0], [2.0, -1.0, 1.0], [2.0, 1.0, 1.0], [-2.0, 1.0, 1.0],
-    #               [2.0, 1.0, 4.0], [-16.0, -5.0, 4.0]]
-    # old_points = [[1.0, 1.0, 1.0], [5.0, 2.0, 1.0], [6.0, 4.0, 1.0], [-1.0, 7.0, 1.0]]
-    # new_points = [[0.0, 0.0, 1.0], [10.0, 0.0, 1.0], [10.0, 5.0, 1.0], [0.0, 5.0, 1.0]]
 
     # Points number
     try:
@@ -300,8 +321,8 @@ def console_alghorithms():
 
 def GUI():
     window = tk.Tk()
-    window.title("Projective distortion")
 
+    window.title("Projective distortion")
     file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
 
     try:
@@ -318,14 +339,14 @@ def GUI():
         height_wc = ld4win.shape[1]
         scalcina = 1
 
-        if width_wc>1080 or height_wc>1920:
-            if width_wc>height_wc:
-                scalcina = 720/width_wc
+        if width_wc > 1080 or height_wc > 1920:
+            if width_wc > height_wc:
+                scalcina = 720 / width_wc
             else:
-                scalcina = 1280/height_wc
+                scalcina = 1280 / height_wc
 
-        width_wc = int(width_wc*scalcina)
-        height_wc = int(height_wc*scalcina)
+        width_wc = int(width_wc * scalcina)
+        height_wc = int(height_wc * scalcina)
 
 
 
@@ -344,19 +365,39 @@ def GUI():
     def click(eventorigin):
         x0 = float(eventorigin.x)
         y0 = float(eventorigin.y)
-        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
         points.append([x0, y0, 1.0])
+        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
+
         print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
         if len(points) == 4:
             canv.unbind("<Button 1>")
-            solve(points, image_file, width_wc, height_wc)
+            canv.unbind("<Motion>")
+            new_points = solve(points, image_file, width_wc, height_wc)
+
             ext = image_file.split('.')
-            new_image = ImageTk.PhotoImage(Image.open("result."+ext[-1]))
+            new_image = ImageTk.PhotoImage(Image.open("result." + ext[-1]))
             canv.itemconfig(1, image=new_image)
+
+            # Drawing points and rectangle on final picture
+            for j in new_points:
+                canv.create_rectangle(j[0] - 5, j[1] - 5, j[0] + 5, j[1] + 5, outline="yellow", width=2)
+            for k in range(len(new_points) - 1):
+                canv.create_line(new_points[k][0], new_points[k][1], new_points[k + 1][0], new_points[k + 1][1],
+                                 fill="yellow")
+            canv.create_line(new_points[len(new_points) - 1][0], new_points[len(new_points) - 1][1], new_points[0][0],
+                             new_points[0][1], fill="yellow")
+
             for i in rec_id:
                 canv.delete(i)
+            canv.delete(text_id)
             tk.mainloop()
 
+    # Mouse motion function
+    def motion(event):
+        x0 = int(event.x)
+        y0 = int(event.y)
+        canv.itemconfig(text_id, text="X: {} Y: {}".format(x0, y0))
+        canv.update()
 
     canv.bind("<Button 1>", click)
     tmp = Image.open(image_file)
@@ -366,28 +407,44 @@ def GUI():
     img = ImageTk.PhotoImage(tmp)
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
+    # Mouse position
+    text_id = canv.create_text(100, 10, fill="red", font="Times 15 italic bold", text="X: {} Y: {}".format(0, 0))
+    canv.bind("<Motion>", motion)
+
     tk.mainloop()
 
+# Swap
+def swapp(pe, i, j):
+    pomx = pe[i][0]
+    pomy = pe[i][1]
+
+    pe[i][0] = pe[j][0]
+    pe[i][1] = pe[j][1]
+    pe[j][0] = pomx
+    pe[j][1] = pomy
+
+    return pe
 
 
 def sorting_points(points):
-    n = len(points)
-    distance = []
-    for i in range(n):
-        distance.append([points[i][0] ** 2 + points[i][1] ** 2, points[i]])
+    pe = points
+    if pe[1][0] + pe[1][1] < pe[0][0] + pe[0][1]:
+        pe = swapp(pe, 0, 1)
+    if pe[2][0] + pe[2][1] < pe[0][1] + pe[0][0]:
+        pe = swapp(pe, 0, 2)
+    if pe[3][0] + pe[3][1] < pe[0][0] + pe[0][1]:
+        pe = swapp(pe, 3, 0)
+    if pe[2][0] < points[1][0]:
+        pe = swapp(pe, 2, 1)
+    if pe[3][0] < points[1][0]:
+        pe = swapp(pe, 3, 1)
+    if pe[3][1] > points[2][1]:
+        pe = swapp(pe, 2, 3)
 
-    ret_points = sorted(distance, key=lambda x: x[0])
-
-    old_points = []
-    for i in range(n):
-        old_points.append(ret_points[i][1])
-
-    return old_points
+    return pe
 
 
-# added image_file as argument
-
-def solve(points, image_file,width_w, height_w):
+def solve(points, image_file, width_w, height_w):
     # Sorting points by distance
     old_points = sorting_points(points)
 
@@ -408,12 +465,16 @@ def solve(points, image_file,width_w, height_w):
     new_points[3][0] = new_points[2][0]
     new_points[3][1] = new_points[0][1]
 
+    # Points that will be returned from function for purpose of drawing
+    new_points_return = copy.deepcopy(new_points)
+
     # Sorting new points TOO
-    new_points = sorting_points(new_points)
+    # new_points = sorting_points(new_points)
 
     M = dlt_algorithm_m(old_points, new_points)
+    print(M)
     im = cv2.imread(image_file)
-    imf = cv2.resize(im,(height_w,width_w))
+    imf = cv2.resize(im, (height_w, width_w))
     newim = cv2.warpPerspective(imf, M, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
 
     # geting extension of sent file
@@ -421,11 +482,27 @@ def solve(points, image_file,width_w, height_w):
     # saving file result.ext
     cv2.imwrite("result." + ext[-1], newim)
 
+    # returning unsorted points (drawing)
+    return new_points_return
+
 
 # MAIN
 def main():
-    GUI()
-    # console_alghorithms()
+    print("[TEST|INPUT|GUI]:")
+
+    while True:
+        u_ans = input().lower()
+        if u_ans == "gui":
+            GUI()
+            break
+        elif u_ans == "input":
+            console_alghorithms()
+            break
+        elif u_ans == "test":
+            test()
+            break
+        else:
+            print("Please choose between [TEST|INPUT|GUI]:")
 
     sys.exit()
 
