@@ -413,7 +413,7 @@ def GUI():
 
     tk.mainloop()
 
-
+# Swap
 def swapp(pe, i, j):
     pomx = pe[i][0]
     pomy = pe[i][1]
