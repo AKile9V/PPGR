@@ -7,8 +7,6 @@ import copy
 import sys
 import math
 import cv2
-
-import time
 import tkinter as tk
 from PIL import ImageTk, Image
 import tkinter.filedialog
@@ -300,7 +298,9 @@ def console_alghorithms():
 
 
 def GUI():
+    window = tk.Tk()
 
+    window.title("Projective distortion")
     file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
 
     try:
@@ -333,9 +333,7 @@ def GUI():
         sys.exit(1)
 
 
-    window = tk.Tk()
-    
-    window.title("Projective distortion")
+
 
     geom_string = "{}x{}".format(height_wc, width_wc)
     window.geometry(geom_string)
