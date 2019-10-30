@@ -472,10 +472,24 @@ def solve(points, image_file, width_w, height_w):
     # new_points = sorting_points(new_points)
 
     M = dlt_algorithm_m(old_points, new_points)
+    M_inv = np.linalg.inv(M)
+    print("Matrix P:")
     print(M)
     im = cv2.imread(image_file)
     imf = cv2.resize(im, (height_w, width_w))
-    newim = cv2.warpPerspective(imf, M, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
+    # cv2 function
+    # newim = cv2.warpPerspective(imf, M, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
+
+    # Magic
+    mP = [[y, x, 1] for x in range(width_w) for y in range(height_w)]
+    mP = np.array(mP, dtype=np.float32)
+    mP = np.transpose(mP)
+    mI = M_inv.dot(mP)
+    mX = mI[0] / mI[-1]
+    mY = mI[1] / mI[-1]
+    mX = np.reshape(mX,(width_w,height_w)).astype(np.float32)
+    mY = np.reshape(mY,(width_w,height_w)).astype(np.float32)
+    newim = cv2.remap(imf,mX,mY,cv2.INTER_LINEAR)
 
     # geting extension of sent file
     ext = image_file.split('.')
