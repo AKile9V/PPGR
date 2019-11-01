@@ -12,7 +12,7 @@ from PIL import ImageTk, Image
 import tkinter.filedialog
 
 
-# ---------------------------------- NAIVE ----------------------------------
+# ----------------------------------------------- NAIVE ------------------------------------------------
 
 def naive_algorithm(old_points, new_points):
     new_points = np.array(new_points)
@@ -79,7 +79,7 @@ def naive_algorithm(old_points, new_points):
     return p_matrix
 
 
-# ---------------------------------- DLT ----------------------------------
+# ------------------------------------------------- DLT ---------------------------------------------------
 
 def dlt_algorithm(old_points, new_points):
     old_points = np.array(old_points)
@@ -119,7 +119,7 @@ def dlt_algorithm(old_points, new_points):
     return p_matrix
 
 
-# ---------------------------------- DLT-M ----------------------------------
+# ------------------------------------------------ DLT-M --------------------------------------------------
 
 
 def dlt_algorithm_m(old_points, new_points):
@@ -201,17 +201,20 @@ def dlt_algorithm_m(old_points, new_points):
     return matrix_p
 
 
-# ---------------------------------- CONSOLE ----------------------------------
+# ----------------------------------------------- TEST --------------------------------------------------
 
 
 def test():
-    # Mocking
+    # Mocking 01
     old_points = [[-3.0, -1.0, 1.0], [3.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
                   [1.0, 2.0, 3.0], [-8.0, -2.0, 1.0]]
     new_points = [[-2.0, -1.0, 1.0], [2.0, -1.0, 1.0], [2.0, 1.0, 1.0], [-2.0, 1.0, 1.0],
                   [2.0, 1.0, 4.0], [-16.0, -5.0, 4.0]]
+    # Mocking 02
     # old_points = [[1.0, 1.0, 1.0], [5.0, 2.0, 1.0], [6.0, 4.0, 1.0], [-1.0, 7.0, 1.0], [3.0, 1.0, 1.0]]
     # new_points = [[0.0, 0.0, 1.0], [10.0, 0.0, 1.0], [10.0, 5.0, 1.0], [0.0, 5.0, 1.0], [3.0, -1.0, 1.0]]
+
+    # Algorithm choice
     while True:
         a = input("Which algorithm do you want to use: \n0:Naive\n1:DLT\n2:DLT-mod\n").lower()
         if a == "1" or a == "2" or a == "dlt" or a == "dlt-mod" or a == "0" or a == "naive":
@@ -233,8 +236,12 @@ def test():
         else:
             print("Pick algorithm by typing [0|NAIVE|naive] or [1|DLT|dlt] or [2|DLT-mod|dlt-mod]")
 
+    return
 
-def console_alghorithms():
+
+# --------------------------------------------- CONSOLE -------------------------------------------------------
+
+def console_algorithms():
     old_points = []
     new_points = []
 
@@ -316,77 +323,95 @@ def console_alghorithms():
     return
 
 
-# ---------------------------------- GUI ----------------------------------
+# ------------------------------------------------- gui -------------------------------------------------
 
 
-def GUI():
+def gui():
+    # Number of points for creating polygon
+    while True:
+        try:
+            num_of_points = int(input("How many points do you want to use?\n"))
+            break
+        except ValueError:
+            print("Please enter the correct number")
+            pass
+
+    # Making window
     window = tk.Tk()
-
     window.title("Projective distortion")
+
+    # Supported picture formats TODO: so far only this 4, add more
     file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
 
+    # (SystemError, AttributeError)
     try:
         # Open file dialog
         image_file = tkinter.filedialog.askopenfilename(initialdir="~/Desktop", title="Select picture to upload:",
                                                         filetypes=(("Pictures", file_types),))
 
-        # If u want fullscreen:
-        # window.attributes("-zoomed", True)
-
         # Window size = picture dimensions
         ld4win = cv2.imread(image_file)
         width_wc = ld4win.shape[0]
         height_wc = ld4win.shape[1]
-        scalcina = 1
 
+        # If image is larger then 1080p, scale it to 720p
+        scale_ratio = 1
         if width_wc > 1080 or height_wc > 1920:
             if width_wc > height_wc:
-                scalcina = 720 / width_wc
+                scale_ratio = 720 / width_wc
             else:
-                scalcina = 1280 / height_wc
-
-        width_wc = int(width_wc * scalcina)
-        height_wc = int(height_wc * scalcina)
-
-
+                scale_ratio = 1280 / height_wc
+        # Scaling
+        width_wc = int(width_wc * scale_ratio)
+        height_wc = int(height_wc * scale_ratio)
 
     except(SystemError, AttributeError):
         print("You must choose file to upload")
         sys.exit(1)
 
+    # Window size setting
     geom_string = "{}x{}".format(height_wc, width_wc)
     window.geometry(geom_string)
+    # Canvas size setting
     canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
     canv.pack(expand=True, fill="both")
 
+    # Pixels chosen by mouse clicks
     points = []
+    # Mark pixels with rectangles
     rec_id = []
 
     def click(eventorigin):
+        # Take (x,y) coords
         x0 = float(eventorigin.x)
         y0 = float(eventorigin.y)
         points.append([x0, y0, 1.0])
-        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="#f11", width=2))
+        rec_id.append(canv.create_rectangle(x0 - 5, y0 - 5, x0 + 5, y0 + 5, outline="red", width=3))
+        print("#{}Point {}:{} is taken".format(len(points), x0, y0))
 
-        print("#{}Tacka {}:{} je uneta".format(len(points), x0, y0))
-        if len(points) == 4:
+        # All points are chosen
+        if len(points) == num_of_points:
             canv.unbind("<Button 1>")
             canv.unbind("<Motion>")
             new_points = solve(points, image_file, width_wc, height_wc)
 
+            # Find picture extension and load it to canvas
             ext = image_file.split('.')
             new_image = ImageTk.PhotoImage(Image.open("result." + ext[-1]))
             canv.itemconfig(1, image=new_image)
 
             # Drawing points and rectangle on final picture
             for j in new_points:
-                canv.create_rectangle(j[0] - 5, j[1] - 5, j[0] + 5, j[1] + 5, outline="yellow", width=2)
+                canv.create_rectangle(j[0] - 5, j[1] - 5, j[0] + 5, j[1] + 5, outline="green", width=3)
             for k in range(len(new_points) - 1):
                 canv.create_line(new_points[k][0], new_points[k][1], new_points[k + 1][0], new_points[k + 1][1],
-                                 fill="yellow")
-            canv.create_line(new_points[len(new_points) - 1][0], new_points[len(new_points) - 1][1], new_points[0][0],
-                             new_points[0][1], fill="yellow")
+                                 fill="green")
 
+            # FIXME: doesnt work for good >4
+            # canv.create_line(new_points[len(new_points) - 1][0], new_points[len(new_points) - 1][1], new_points[0][0],
+            #                  new_points[0][1], fill="green")
+
+            # Deleting old rectangles(red)
             for i in rec_id:
                 canv.delete(i)
             canv.delete(text_id)
@@ -399,56 +424,59 @@ def GUI():
         canv.itemconfig(text_id, text="X: {} Y: {}".format(x0, y0))
         canv.update()
 
+    # Actions on mouse click
     canv.bind("<Button 1>", click)
+
+    # Resize picture if its size is >1080p
     tmp = Image.open(image_file)
     tmp = tmp.resize((height_wc, width_wc), Image.ANTIALIAS)
-    # img = ImageTk.PhotoImage(tmp)
-
     img = ImageTk.PhotoImage(tmp)
     canv.create_image(0, 0, image=img, anchor=tk.NW)
 
     # Mouse position
-    text_id = canv.create_text(100, 10, fill="red", font="Times 15 italic bold", text="X: {} Y: {}".format(0, 0))
+    text_id = canv.create_text(100, 10, fill="red", font="Times 15 bold", text="X: {} Y: {}".format(0, 0))
     canv.bind("<Motion>", motion)
 
     tk.mainloop()
 
-# Swap
-def swapp(pe, i, j):
-    pomx = pe[i][0]
-    pomy = pe[i][1]
+
+# Swap points
+def swap_points(pe, i, j):
+    pom_x = pe[i][0]
+    pom_y = pe[i][1]
 
     pe[i][0] = pe[j][0]
     pe[i][1] = pe[j][1]
-    pe[j][0] = pomx
-    pe[j][1] = pomy
+    pe[j][0] = pom_x
+    pe[j][1] = pom_y
 
     return pe
 
 
+# Sorting points clockwise FIXME: work only with 4 points
 def sorting_points(points):
     pe = points
     if pe[1][0] + pe[1][1] < pe[0][0] + pe[0][1]:
-        pe = swapp(pe, 0, 1)
+        pe = swap_points(pe, 0, 1)
     if pe[2][0] + pe[2][1] < pe[0][1] + pe[0][0]:
-        pe = swapp(pe, 0, 2)
+        pe = swap_points(pe, 0, 2)
     if pe[3][0] + pe[3][1] < pe[0][0] + pe[0][1]:
-        pe = swapp(pe, 3, 0)
+        pe = swap_points(pe, 3, 0)
     if pe[2][0] < points[1][0]:
-        pe = swapp(pe, 2, 1)
+        pe = swap_points(pe, 2, 1)
     if pe[3][0] < points[1][0]:
-        pe = swapp(pe, 3, 1)
+        pe = swap_points(pe, 3, 1)
     if pe[3][1] > points[2][1]:
-        pe = swapp(pe, 2, 3)
+        pe = swap_points(pe, 2, 3)
 
     return pe
 
 
 def solve(points, image_file, width_w, height_w):
-    # Sorting points by distance
+    # Sorting points clockwise
     old_points = sorting_points(points)
 
-    # Finding images
+    # Finding images FIXME: this solution only work with 4 points
     new_points = copy.deepcopy(old_points)
     d = (abs(new_points[0][0] - new_points[3][0]) + abs(new_points[1][0] - new_points[2][0])) / 2
     v = (abs(new_points[0][1] - new_points[1][1]) + abs(new_points[3][1] - new_points[2][1])) / 2
@@ -468,35 +496,40 @@ def solve(points, image_file, width_w, height_w):
     # Points that will be returned from function for purpose of drawing
     new_points_return = copy.deepcopy(new_points)
 
-    # Sorting new points TOO
-    # new_points = sorting_points(new_points)
-
-    M = dlt_algorithm_m(old_points, new_points)
-    M_inv = np.linalg.inv(M)
+    # Algorithm
+    m = dlt_algorithm_m(old_points, new_points)
+    # Inverse matrix
+    m_inv = np.linalg.inv(m)
     print("Matrix P:")
-    print(M)
+    print(m)
+
+    # Loading and resizing image for refining distortion
     im = cv2.imread(image_file)
     imf = cv2.resize(im, (height_w, width_w))
+
     # cv2 function
-    # newim = cv2.warpPerspective(imf, M, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
+    # new_im = cv2.warpPerspective(imf, m, (imf.shape[1], imf.shape[0]), flags=cv2.INTER_LINEAR)
 
-    # Magic
-    mP = [[y, x, 1] for x in range(width_w) for y in range(height_w)]
-    mP = np.array(mP, dtype=np.float32)
-    mP = np.transpose(mP)
-    mI = M_inv.dot(mP)
-    mX = mI[0] / mI[-1]
-    mY = mI[1] / mI[-1]
-    mX = np.reshape(mX,(width_w,height_w)).astype(np.float32)
-    mY = np.reshape(mY,(width_w,height_w)).astype(np.float32)
-    newim = cv2.remap(imf,mX,mY,cv2.INTER_LINEAR)
+    # Making matrix of every single pixel (size of image)
+    matrix_pixels = [[y, x, 1] for x in range(width_w) for y in range(height_w)]
+    matrix_pixels = np.array(matrix_pixels, dtype=np.float32)
+    matrix_pixels = np.transpose(matrix_pixels)
 
-    # geting extension of sent file
+    # New matrix of pixels
+    matrix_i = m_inv.dot(matrix_pixels)
+    m_x = matrix_i[0] / matrix_i[-1]
+    m_y = matrix_i[1] / matrix_i[-1]
+    m_x = np.reshape(m_x, (width_w, height_w)).astype(np.float32)
+    m_y = np.reshape(m_y, (width_w, height_w)).astype(np.float32)
+    # Remapping pixels
+    new_im = cv2.remap(imf, m_x, m_y, cv2.INTER_LINEAR)
+
+    # Getting extension of sent file
     ext = image_file.split('.')
-    # saving file result.ext
-    cv2.imwrite("result." + ext[-1], newim)
+    # Saving file as result.[ext]
+    cv2.imwrite("result." + ext[-1], new_im)
 
-    # returning unsorted points (drawing)
+    # Returning unsorted points (drawing)
     return new_points_return
 
 
@@ -507,20 +540,20 @@ def main():
     while True:
         u_ans = input().lower()
         if u_ans == "gui":
-            GUI()
+            gui()
             break
         elif u_ans == "input":
-            console_alghorithms()
+            console_algorithms()
             break
         elif u_ans == "test":
             test()
             break
         else:
-            print("Please choose between [TEST|INPUT|GUI]:")
+            print("Please choose between [TEST|INPUT|gui]:")
 
     sys.exit()
 
 
-# GOGOGO
+# GO GO GO
 if __name__ == "__main__":
     main()
