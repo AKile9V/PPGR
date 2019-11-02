@@ -323,11 +323,11 @@ def console_algorithms():
     return
 
 
-# ------------------------------------------------- gui -------------------------------------------------
+# ------------------------------------------------- GUI -------------------------------------------------
 
 
 def gui():
-    # Number of points for creating polygon
+    # Number of points for creating polygon TODO: dont care about user input
     while True:
         try:
             num_of_points = int(input("How many points do you want to use?\n"))
@@ -336,17 +336,22 @@ def gui():
             print("Please enter the correct number")
             pass
 
+    # Delete this after fixing =4 problem
+    num_of_points = 4
+    print("You can use only {} points".format(num_of_points))
+
     # Making window
     window = tk.Tk()
     window.title("Projective distortion")
 
     # Supported picture formats TODO: so far only this 4, add more
-    file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
+    file_types = ["*.jpeg", "*.jpg", "*.bmp", "*.png", "*.JPG", "*.JPEG", "*.BMP", "*.PNG"]
 
     # (SystemError, AttributeError)
     try:
         # Open file dialog
-        image_file = tkinter.filedialog.askopenfilename(initialdir="~/Desktop", title="Select picture to upload:",
+        image_file = tkinter.filedialog.askopenfilename(initialdir="./examplesForInput",
+                                                        title="Select picture to upload:",
                                                         filetypes=(("Pictures", file_types),))
 
         # Window size = picture dimensions
@@ -358,9 +363,9 @@ def gui():
         scale_ratio = 1
         if width_wc > 1080 or height_wc > 1920:
             if width_wc > height_wc:
-                scale_ratio = 720 / width_wc
+                scale_ratio = 768 / width_wc
             else:
-                scale_ratio = 1280 / height_wc
+                scale_ratio = 1366 / height_wc
         # Scaling
         width_wc = int(width_wc * scale_ratio)
         height_wc = int(height_wc * scale_ratio)
@@ -370,7 +375,10 @@ def gui():
         sys.exit(1)
 
     # Window size setting
-    geom_string = "{}x{}".format(height_wc, width_wc)
+    pos_width = (window.winfo_screenwidth() // 2) - (height_wc // 2)
+    pos_height = (window.winfo_screenheight() // 2) - (width_wc // 2)
+
+    geom_string = "{}x{}+{}+{}".format(height_wc, width_wc, pos_width, pos_height)
     window.geometry(geom_string)
     # Canvas size setting
     canv = tk.Canvas(window, width=width_wc, height=height_wc, bg='white')
@@ -403,11 +411,12 @@ def gui():
             # Drawing points and rectangle on final picture
             for j in new_points:
                 canv.create_rectangle(j[0] - 5, j[1] - 5, j[0] + 5, j[1] + 5, outline="green", width=3)
-            for k in range(len(new_points) - 1):
-                canv.create_line(new_points[k][0], new_points[k][1], new_points[k + 1][0], new_points[k + 1][1],
-                                 fill="green")
 
-            # FIXME: doesnt work for good >4
+            # Draw lines to make a polygon
+            # for k in range(len(new_points) - 1):
+            #     canv.create_line(new_points[k][0], new_points[k][1], new_points[k + 1][0], new_points[k + 1][1],
+            #                      fill="green")
+
             # canv.create_line(new_points[len(new_points) - 1][0], new_points[len(new_points) - 1][1], new_points[0][0],
             #                  new_points[0][1], fill="green")
 
@@ -549,7 +558,7 @@ def main():
             test()
             break
         else:
-            print("Please choose between [TEST|INPUT|gui]:")
+            print("Please choose between [TEST|INPUT|GUI]:")
 
     sys.exit()
 
