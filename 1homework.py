@@ -323,7 +323,7 @@ def console_algorithms():
     return
 
 
-# ------------------------------------------------- gui -------------------------------------------------
+# ------------------------------------------------- GUI -------------------------------------------------
 
 
 def gui():
@@ -455,7 +455,7 @@ def swap_points(pe, i, j):
 
 # Sorting points clockwise FIXME: work only with 4 points
 def sorting_points(points):
-    pe = points
+    pe = copy.deepcopy(points)
     if pe[1][0] + pe[1][1] < pe[0][0] + pe[0][1]:
         pe = swap_points(pe, 0, 1)
     if pe[2][0] + pe[2][1] < pe[0][1] + pe[0][0]:
@@ -469,6 +469,37 @@ def sorting_points(points):
     if pe[3][1] > points[2][1]:
         pe = swap_points(pe, 2, 3)
 
+    # soritram po distanci i biram najblizu 0,0 i to je ona pocetna tacka oko koje se sve ostale biraju
+    n = len(points)
+    distance = []
+    for i in range(n):
+        distance.append([points[i][0] ** 2 + points[i][1] ** 2, points[i]])
+
+    # pocetna najbliza 0,0
+    begining_p = min(distance, key=lambda x: x[0])[1]
+    # work obradjujem, po njemu se krecem i iz njega izbacujem kad nadjem onu sa najmanjim koeficijentom k
+    work = copy.deepcopy(points)
+    work.remove(begining_p)
+    # u ovom se sortiraju tacke po koeficijentu k
+    return_points = [begining_p]
+
+    # sve dok work ne postane prazan
+    while work:
+        # dupla petlja, prvo racuna koeficijent k trenutnih u worku i bira na kraju najmanji, moze i brze da
+        # ne racuna iznova al ovo je cisto da se proba
+        kdistance = []
+        n = len(work)
+        for i in range(n):
+            # ovde trpa koeficijente uz odovarajucu tacku
+            kdistance.append([(work[i][0] - begining_p[0]) / (work[i][1] - begining_p[1]), work[i]])
+
+        # ovo je sledeca tacka sa trenutno najmanjim koeficijentom
+        next_one = min(kdistance, key=lambda x: x[0])[1]
+        # kad nadje najmanji, tu tacku izbaci iz worka a ubaci je u listu sortiranih return_points
+        work.remove(next_one)
+        return_points.append(next_one)
+
+    # promeniti da vrati return_points
     return pe
 
 
